@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Арифметика</title>
+</head>
+<body>
+    <div class="container">
+        <div id="page1" class="page1">
+            <h1 class="h1">Арифметические операции</h1>
+            <form class="form" action="" method="get">
+                <label>Введите ваше ФИО:
+                    <input class="inputName" type="text" name="name" required>
+                </label>
+                <label>Введите кол-во прогонов:
+                    <input class="inputTries" type="number" name="tries" required min="1" max="3">
+                </label>
+                <button type="submit">Далее</button>
+            </form>
+        </div>
+        <div id="page2" class="page2">
+            <h2 class="h2">Задача</h2>
+            <form class="form2" action="" method="get">
+                <span class="midResult"></span>
+                <p class="field">(<span class="value1">1</span><sub class="subValue1">1</sub>)&nbsp;<span class="sign">+</span>&nbsp;(<span class="value2">1</span><sub class="subValue2">1</sub>)&nbsp;=&nbsp;<input style="width: 40px" class="answer" type="number"><sub class="subValue3">1</sub></p>
+                <div style="display: flex; column-gap: 5px;">
+                    <button class="btnTry1More" type="submit">Ещё раз</button>
+                    <button class="btnNext" style="display: none;" type="button">Далее</button>
+                </div>
+            </form>
+        </div>
+        <div id="page3" class="page3">
+            <h2 class="h2">Результаты</h2>
+            <table border="10" style="margin-bottom: 10px;">
+                <thead>
+                    <th class="tryNumber">Попытка №</th>
+                    <th class="userAnswer">Ваш ответ</th>
+                    <th class="correctAnswer">Правильный ответ</th>
+                    <th class="result">Результат</th>
+                </thead>
+                <tbody>
+                    <tr class="tr1">
+                        <td class="tdNumber1">1</td>
+                        <td class="tdAnswer1">0</td>
+                        <td class="corrAnswer1">0</td>
+                        <td class="tdResult1">0</td>
+                    </tr>
+                    <tr class="tr2" style="display: none;">
+                        <td class="tdNumber2">2</td>
+                        <td class="tdAnswer2">0</td>
+                        <td class="corrAnswer2">0</td>
+                        <td class="tdResult2">0</td>
+                    </tr>
+                    <tr class="tr3" style="display: none;">
+                        <td class="tdNumber3">3</td>
+                        <td class="tdAnswer3">0</td>
+                        <td class="corrAnswer3">0</td>
+                        <td class="tdResult3">0</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p>Оценка: <span class="mark"></span></p>
+            <form class="form3" action="" method="get" style="display: flex; ">
+                <label style="display: flex;">
+                    Напишите комментарий:
+                    <textarea class="txtArea" name="" id="" cols="30" rows="10"></textarea>
+                </label>
+                <button type="submit">Сохранить</button>
+            </form>
+        </div>
+    </div>
+</body>
+<style>
+    .container {
+        padding: 10px;
+        min-height: 170px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+    }
+    .form,
+    .form3 {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+    #page2, #page3 {
+        display: none;
+    }
+</style>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const form = document.querySelector('.form'),
+              form2 = document.querySelector('.form2'),
+              form3 = document.querySelector('.form3'),
+              page2 = document.querySelector('#page2'),
+              page3 = document.querySelector('#page3'),
+              h1 = document.querySelector('.h1'),
+              field = document.querySelector('.field'),
+              value1 = document.querySelector('.value1'),
+              value2 = document.querySelector('.value2'),
+              subValue1 = document.querySelector('.subValue1'),
+              subValue2 = document.querySelector('.subValue2'),
+              subValue3 = document.querySelector('.subValue3'),
+              inputName = document.querySelector('.inputName'),
+              inputTries = document.querySelector('.inputTries'),
+              inputAnswer = document.querySelector('.answer'),
+              btnTry1More = document.querySelector('.btnTry1More'),
+              btnNext = document.querySelector('.btnNext'),
+              midResult = document.querySelector('.midResult'),
+              sign = document.querySelector('.sign'),
+              tr2 = document.querySelector('.tr2'),
+              tr3 = document.querySelector('.tr3'),
+            //   tdNumber1 = document.querySelector('.tdNumber1'),
+            //   tdNumber2 = document.querySelector('.tdNumber2'),
+            //   tdNumber3 = document.querySelector('.tdNumber3'),
+              tdAnswer1 = document.querySelector('.tdAnswer1'),
+              tdAnswer2 = document.querySelector('.tdAnswer2'),
+              tdAnswer3 = document.querySelector('.tdAnswer3'),
+              corrAnswer1 = document.querySelector('.corrAnswer1'),
+              corrAnswer2 = document.querySelector('.corrAnswer2'),
+              corrAnswer3 = document.querySelector('.corrAnswer3'),
+              tdResult1 = document.querySelector('.tdResult1'),
+              tdResult2 = document.querySelector('.tdResult2'),
+              tdResult3 = document.querySelector('.tdResult3'),
+              mark = document.querySelector('.mark'),
+              txtArea = document.querySelector('.txtArea');
+ 
+        let name = '';
+        let tries = 0;
+        let counter = 1;
+        let correctAnswer = '5';
+        let answer1 = 0;
+        let answer2 = 0;
+        let answer3 = 0;
+        let valueResult = 0;
+
+        function getRandomIntInclusive(min, max) {
+            min = Math.ceil(min);
+            max = Math.floor(max);
+            return Math.floor(Math.random() * (max - min + 1) + min); // Максимум и минимум включаются
+        }
+
+        function download(data, filename, type) {
+            var file = new Blob([data], {type: type});
+            if (window.navigator.msSaveOrOpenBlob) // IE10+
+                window.navigator.msSaveOrOpenBlob(file, filename);
+            else { // Others
+                var a = document.createElement("a"),
+                        url = URL.createObjectURL(file);
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                setTimeout(function() {
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);  
+                }, 0); 
+            }
+        }
+
+        function form3Handler(e) {
+            e.preventDefault();
+            const commentValue = txtArea.value;
+            download(commentValue, `Комментарий`, 'txt');
+            alert('Файл сохранён');
+        }
+
+        function getResult() {
+            tdAnswer1.textContent = answer1;
+            tdAnswer2.textContent = answer2;
+            tdAnswer3.textContent = answer3;
+            corrAnswer1.textContent = correctAnswer;
+            corrAnswer2.textContent = correctAnswer;
+            corrAnswer3.textContent = correctAnswer;
+            mark.textContent = `${+(answer1 === correctAnswer || answer2 === correctAnswer || answer3 === correctAnswer)}`;
+            if (answer1 === correctAnswer) {
+                tdResult1.textContent = 1;
+            } else {
+                tdResult1.textContent = 0;
+            }
+            if (answer2 === correctAnswer) {
+                tdResult2.textContent = 1;
+            } else {
+                tdResult2.textContent = 0;
+            }
+            if (answer3 === correctAnswer) {
+                tdResult3.textContent = 1;
+            } else {
+                tdResult3.textContent = 0;
+            }
+            if (counter === 3) {
+                tr2.style.display = 'table-row';
+            } else if (counter === 4) {
+                tr2.style.display = 'table-row';
+                tr3.style.display = 'table-row';
+            }
+        }
+
+        function doMath(value1, value2, base3, operation) {
+            if (operation === '+') {
+                correctAnswer = (parseInt(+value1) + parseInt(+value2)).toString(base3);
+            }
+            else if (operation === '-') {
+                correctAnswer = (parseInt(+value1) - parseInt(+value2)).toString(base3);
+            }
+            else if (operation === '*') {
+                correctAnswer = (parseInt(+value1) * parseInt(+value2)).toString(base3);
+            }
+            else if (operation === '/') {
+                correctAnswer = String(Math.ceil((parseInt(+value1) / parseInt(+value2)).toString(base3)));
+            }
+            console.log(correctAnswer);
+        }
+
+        function form2Handler(e) {
+            e.preventDefault();
+            //For file
+            let date = new Date();
+            let success = 'Правильно';
+            let wrong = 'Неправильно';
+
+            if (counter === 1) {
+                answer1 = inputAnswer.value;
+            } else if (counter === 2) {
+                answer2 = inputAnswer.value;
+            } else if (counter === 3) {
+                answer3 = inputAnswer.value;
+            }
+
+            if (tries <= counter) {
+                btnTry1More.disabled = true;
+                btnNext.style.display = 'block';
+            }
+            if (inputAnswer.value === correctAnswer) {
+                // let obj = {
+                //     date,
+                //     success
+                // }
+                // const data = JSON.stringify(obj);
+                const data = `Время: ${date}. Ответ: ${inputAnswer.value}. Верно`;
+                download(data, `${counter}ая попытка`, 'txt');
+                midResult.textContent = success;
+                counter++;
+            } else {
+                // let obj = {
+                //     date,
+                //     wrong
+                // }
+                // const data = JSON.stringify(obj);
+                const data = `Время: ${date}. Ответ: ${inputAnswer.value}. Неверно`;
+                download(data, `${counter}ая попытка`, 'txt');
+                midResult.textContent = wrong;
+                counter++;
+            }
+        }
+
+        function page2Handler() {
+            page2.style.display = 'block';
+
+            const randBase1 = getRandomIntInclusive(2, 10);
+            const randBase2 = getRandomIntInclusive(2, 10);
+            const randBase3 = getRandomIntInclusive(2, 10);
+
+            randValue1 = getRandomIntInclusive(-1000, 1000).toString(randBase1);
+            randValue2 = getRandomIntInclusive(-1000, 1000).toString(randBase2);
+
+            const operationNumber = getRandomIntInclusive(1,4);
+            let operation = '+';
+
+            switch (operationNumber) {
+                case 1: 
+                    operation = '+';
+                    break;
+                case 2: 
+                    operation = '-';
+                    break;
+                case 3: 
+                    operation = '*';
+                    break;
+                case 4: 
+                    operation = '/';
+                    break;
+            }
+
+            sign.textContent = operation;
+
+            subValue1.textContent = randBase1;
+            subValue2.textContent = randBase2;
+            subValue3.textContent = randBase3;
+            
+            value1.textContent = randValue1;
+            value2.textContent = randValue2;
+
+            doMath(randValue1, randValue2, randBase3, operation);
+        }
+
+        function formHandler(e) {
+            e.preventDefault();
+            name = inputName.value;
+            tries = inputTries.value;
+            page1.style.display = 'none';
+            page2Handler();
+        }
+
+        form.addEventListener('submit', formHandler);
+
+        form2.addEventListener('submit', form2Handler);
+
+        form3.addEventListener('submit', form3Handler);
+
+        btnNext.onclick = function() {
+            page2.style.display = 'none';
+            page3.style.display = 'block';
+            getResult();
+        };
+
+    });
+</script>
+</html>
