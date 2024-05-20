@@ -276,7 +276,7 @@
                 correctAnswer = (parseInt(+value1) * parseInt(+value2)).toString(base3);
             }
             else if (operation === '/') {
-                correctAnswer = String(Math.ceil((parseInt(+value1) / parseInt(+value2)).toString(base3)));
+                correctAnswer = (parseInt(+value1) / parseInt(+value2)).toString(base3);
             }
             console.log(correctAnswer);
         }
@@ -298,6 +298,7 @@
 
             if (tries <= counter) {
                 btnTry1More.disabled = true;
+                btnTry1More.style.background = '#646262';
                 btnNext.style.display = 'block';
             }
             if (inputAnswer.value === correctAnswer) {
