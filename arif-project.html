@@ -66,6 +66,7 @@
                     Напишите комментарий:
                     <textarea class="txtArea" name="" id="" cols="30" rows="10"></textarea>
                 </label>
+                <p class="success-after-save-comment">Файл сохранён</p>
                 <button type="submit">Сохранить</button>
             </form>
         </div>
@@ -143,17 +144,24 @@
         padding: 10px;
         border: 1px solid #4078e1;
         font-size: 1em;
-}
+    }
     table {
         border: 3px solid #4078e1;
         border-collapse: collapse;
         font-size: 1em;
         color: #292929;
-}
+    }
     th {
         border: 1px solid #4078e1;
         font-size: 1em;
-}
+    }
+    .txtArea {
+        resize: vertical;
+    }
+    .success-after-save-comment {
+        display: none;
+    }
+
    
 </style>
 <script>
@@ -193,6 +201,7 @@
               tdResult3 = document.querySelector('.tdResult3'),
               mark = document.querySelector('.mark'),
               txtArea = document.querySelector('.txtArea');
+              successText = document.querySelector('.success-after-save-comment');
  
         let name = '';
         let tries = 0;
@@ -229,9 +238,10 @@
 
         function form3Handler(e) {
             e.preventDefault();
-            const commentValue = txtArea.value;
+            const commentValue = `${name}: ${txtArea.value}`;
             download(commentValue, `Комментарий`, 'txt');
-            alert('Файл сохранён');
+            successText.style.display = 'block';
+
         }
 
         function getResult() {
