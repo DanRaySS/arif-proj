@@ -23,7 +23,7 @@
             <h2 class="h2">Задача</h2>
             <form class="form2" action="" method="get">
                 <span class="midResult"></span>
-                <p class="field">(<span class="value1">1</span><sub class="subValue1">1</sub>)&nbsp;<span class="sign">+</span>&nbsp;(<span class="value2">1</span><sub class="subValue2">1</sub>)&nbsp;=&nbsp;<input style="width: 40px" class="answer" type="number"><sub class="subValue3">1</sub></p>
+                <p class="field">(<span class="value1">1</span><sub class="subValue1">1</sub>)&nbsp;<span class="sign">+</span>&nbsp;(<span class="value2">1</span><sub class="subValue2">1</sub>)&nbsp;=&nbsp;<input class="answer" type="number"><sub class="subValue3">1</sub></p>
                 <div style="display: flex; justify-content: center; column-gap: 5px;">
                     <button class="btnTry1More" type="submit">Ещё раз</button>
                     <button class="btnNext" style="display: none;" type="button">Далее</button>
@@ -139,6 +139,7 @@
     .answer{
         height: 24px;
         color: #292929;
+        width: 90px;
     }
     td {
         padding: 10px;
@@ -275,18 +276,53 @@
             }
         }
 
-        function doMath(value1, value2, base3, operation) {
+        function convertBase(value, from_base, to_base) {
+            let range = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+/'.split('');
+            let from_range = range.slice(0, from_base);
+            let to_range = range.slice(0, to_base);
+            let isNegative = false;
+            let checkedValue = '';
+
+            let trimedValue = value.trim();
+            if (trimedValue[0] === '-') {
+                isNegative = true
+            }
+            if (isNegative) {
+                checkedValue = trimedValue.slice(1);
+            } else {
+                checkedValue = trimedValue;
+            }
+            let dec_value = checkedValue.split('').reverse().reduce(function (carry, digit, index) {
+                if (from_range.indexOf(digit) === -1) throw new Error('Invalid digit `'+digit+'` for base '+from_base+'.');
+                return carry += from_range.indexOf(digit) * (Math.pow(from_base, index));
+            }, 0);
+            
+            let new_value = '';
+            while (dec_value > 0) {
+                new_value = to_range[dec_value % to_base] + new_value;
+                dec_value = (dec_value - (dec_value % to_base)) / to_base;
+            }
+            if (isNegative) {
+                return -new_value;
+            } else {
+                return new_value;
+            }
+        }
+
+        function doMath(value1, value2, base1, base2, final_base, operation) {
+            const convertedValue1 = convertBase(value1, base1, 10);
+            const convertedValue2 = convertBase(value2, base2, 10);
             if (operation === '+') {
-                correctAnswer = (parseInt(+value1) + parseInt(+value2)).toString(base3);
+                correctAnswer = (convertedValue1 + convertedValue2).toString(final_base);
             }
             else if (operation === '-') {
-                correctAnswer = (parseInt(+value1) - parseInt(+value2)).toString(base3);
+                correctAnswer = (convertedValue1 - convertedValue2).toString(final_base);
             }
             else if (operation === '*') {
-                correctAnswer = (parseInt(+value1) * parseInt(+value2)).toString(base3);
+                correctAnswer = (convertedValue1 * convertedValue2).toString(final_base);
             }
             else if (operation === '/') {
-                correctAnswer = (parseInt(+value1) / parseInt(+value2)).toString(base3);
+                correctAnswer = (convertedValue1 / convertedValue2).toString(final_base);
             }
             console.log(correctAnswer);
         }
@@ -371,7 +407,7 @@
             value1.textContent = randValue1;
             value2.textContent = randValue2;
 
-            doMath(randValue1, randValue2, randBase3, operation);
+            doMath(randValue1, randValue2, randBase1, randBase2, randBase3, operation);
         }
 
         function formHandler(e) {
