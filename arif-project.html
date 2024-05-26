@@ -14,16 +14,20 @@
                     <input class="inputName" type="text" name="name" required>
                 </label>
                 <label class="inputLabel">Введите кол-во прогонов:
-                    <input class="inputTries" type="number" name="tries" required min="1" max="3">
+                    <input class="inputTries" type="number" step="any" name="tries" required min="1" max="3">
                 </label>
                 <button type="submit">Далее</button>
             </form>
         </div>
         <div id="page2" class="page2">
             <h2 class="h2">Задача</h2>
+            <p style="font-size: 18px; color: #666;">* — Округление до третьего знака после запятой</p>
             <form class="form2" action="" method="get">
                 <span class="midResult"></span>
-                <p class="field">(<span class="value1">1</span><sub class="subValue1">1</sub>)&nbsp;<span class="sign">+</span>&nbsp;(<span class="value2">1</span><sub class="subValue2">1</sub>)&nbsp;=&nbsp;<input class="answer" type="number"><sub class="subValue3">1</sub></p>
+                <p class="field">
+                    <span class="equation"></span>
+                    &nbsp;=&nbsp;<input class="answer" type="number"><sub class="subValue3">1</sub>
+                </p>
                 <div style="display: flex; justify-content: center; column-gap: 5px;">
                     <button class="btnTry1More" type="submit">Ещё раз</button>
                     <button class="btnNext" style="display: none;" type="button">Далее</button>
@@ -93,7 +97,9 @@
         flex-direction: column;
         gap: 10px;
     }
-    #page2, #page3 {
+
+    #page2,
+    #page3 {
         display: none;
     }
     .h1{
@@ -188,9 +194,6 @@
               sign = document.querySelector('.sign'),
               tr2 = document.querySelector('.tr2'),
               tr3 = document.querySelector('.tr3'),
-            //   tdNumber1 = document.querySelector('.tdNumber1'),
-            //   tdNumber2 = document.querySelector('.tdNumber2'),
-            //   tdNumber3 = document.querySelector('.tdNumber3'),
               tdAnswer1 = document.querySelector('.tdAnswer1'),
               tdAnswer2 = document.querySelector('.tdAnswer2'),
               tdAnswer3 = document.querySelector('.tdAnswer3'),
@@ -201,9 +204,12 @@
               tdResult2 = document.querySelector('.tdResult2'),
               tdResult3 = document.querySelector('.tdResult3'),
               mark = document.querySelector('.mark'),
-              txtArea = document.querySelector('.txtArea');
-              successText = document.querySelector('.success-after-save-comment');
- 
+              txtArea = document.querySelector('.txtArea'),
+              successText = document.querySelector('.success-after-save-comment'),
+              equationText = document.querySelector('.equation');
+
+        const MAX_DEPTH = 2;
+
         let name = '';
         let tries = 0;
         let counter = 1;
@@ -217,6 +223,19 @@
             min = Math.ceil(min);
             max = Math.floor(max);
             return Math.floor(Math.random() * (max - min + 1) + min); // Максимум и минимум включаются
+        }
+
+
+        function getRandomOperation() {
+            const operation = choice(['+', '-', '*', '/', '+', '-', '*']);
+            return operation;
+        }
+
+        function getRandomNumber() {
+            const base = getRandomIntInclusive(2, 10);
+            const value = getRandomIntInclusive(-100, 100).toString(base);
+
+            return new BasedNumber(value, base);
         }
 
         function download(data, filename, type) {
@@ -242,7 +261,6 @@
             const commentValue = `${name}: ${txtArea.value}`;
             download(commentValue, `Комментарий`, 'txt');
             successText.style.display = 'block';
-
         }
 
         function getResult() {
@@ -276,55 +294,174 @@
             }
         }
 
-        function convertBase(value, from_base, to_base) {
-            let range = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+/'.split('');
-            let from_range = range.slice(0, from_base);
-            let to_range = range.slice(0, to_base);
-            let isNegative = false;
-            let checkedValue = '';
+        function convertFromBase10Fractional(base10Fractional, toAlphabet) {
+            const precision = 10
+            const toBase = toAlphabet.length
+            let value = ''
+            for (let i = 0; i < precision && base10Fractional !== 0; i++) {
+                const fractDigit = Math.floor(base10Fractional * toBase)
+                value += toAlphabet[fractDigit]
+                base10Fractional = base10Fractional * toBase - fractDigit
+            }
+            return value
+        }
 
-            let trimedValue = value.trim();
-            if (trimedValue[0] === '-') {
-                isNegative = true
+        function convertFromBase10Integer(base10Integer, toAlphabet) {
+            const toBase = toAlphabet.length
+
+            let value = ''
+            while (base10Integer > 0) {
+                value = toAlphabet[Number(base10Integer % toBase)] + value
+                base10Integer = (base10Integer - (base10Integer % toBase)) / toBase
             }
-            if (isNegative) {
-                checkedValue = trimedValue.slice(1);
-            } else {
-                checkedValue = trimedValue;
+
+            return value || '0'
+        }
+
+        function convertFromBase10Integer(base10Integer, toAlphabet) {
+            const toBase = toAlphabet.length
+
+            let value = ''
+            while (base10Integer > 0) {
+                value = toAlphabet[Number(base10Integer % toBase)] + value
+                base10Integer = (base10Integer - (base10Integer % toBase)) / toBase
             }
-            let dec_value = checkedValue.split('').reverse().reduce(function (carry, digit, index) {
-                if (from_range.indexOf(digit) === -1) throw new Error('Invalid digit `'+digit+'` for base '+from_base+'.');
-                return carry += from_range.indexOf(digit) * (Math.pow(from_base, index));
-            }, 0);
-            
-            let new_value = '';
-            while (dec_value > 0) {
-                new_value = to_range[dec_value % to_base] + new_value;
-                dec_value = (dec_value - (dec_value % to_base)) / to_base;
+
+            return value || '0'
+        }
+
+        function fromDecimal(value, toBase) {
+            const range = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+/'.split('');
+
+            const isNegative = value[0] === '-'
+            const toBaseSign = isNegative ? '-' : ''
+            const absoluteValue = isNegative ? value.substring(1) : value
+            const [integerPart, fractionalPart = ''] = absoluteValue.split('.')
+            const fromRange = range.slice(0, 10)
+            const toRange = range.slice(0, toBase)
+
+            const base10Integer = integerPart
+            const toBaseInteger = convertFromBase10Integer(base10Integer, toRange)
+
+            if (fractionalPart !== '') {
+                const base10Fractional = '0.' + fractionalPart
+                const toBaseFractional = convertFromBase10Fractional(base10Fractional, toRange)
+                return toBaseSign + toBaseInteger + '.' + toBaseFractional
             }
-            if (isNegative) {
-                return -new_value;
-            } else {
-                return new_value;
+
+            return toBaseSign + toBaseInteger
+        }
+
+        class BasedNumber {
+            constructor(value, base) {
+                this.value = value;
+                this.base = base;
+            }
+
+            add(other) {
+                const [convertedValue1, convertedValue2] = this.convertValues(other);
+                return new BasedNumber(convertedValue1 + convertedValue2, 10);
+            }
+
+            sub(other) {
+                const [convertedValue1, convertedValue2] = this.convertValues(other);
+                return new BasedNumber(convertedValue1 - convertedValue2, 10);
+            }
+
+            mult(other) {
+                const [convertedValue1, convertedValue2] = this.convertValues(other);
+                return new BasedNumber(convertedValue1 * convertedValue2, 10);
+            }
+
+            div(other) {
+                const [convertedValue1, convertedValue2] = this.convertValues(other);
+                return new BasedNumber(convertedValue1 / convertedValue2, 10);
+            }
+
+            toDecimal() {
+                if (this.base !== 10 || typeof this.value === 'string')
+                    return Number.parseInt(this.value, this.base);
+                return this.value;
+            }
+
+            convertValues(other) {
+                return [this.toDecimal(), other.toDecimal()];
+            }
+
+            toString() {
+                return `(<span>${this.value}</span><sub>${this.base}</sub>)`;
             }
         }
 
-        function doMath(value1, value2, base1, base2, final_base, operation) {
-            const convertedValue1 = convertBase(value1, base1, 10);
-            const convertedValue2 = convertBase(value2, base2, 10);
+        function doMath(value1, value2, operation) {
             if (operation === '+') {
-                correctAnswer = (convertedValue1 + convertedValue2).toString(final_base);
+                return value1.add(value2);
             }
             else if (operation === '-') {
-                correctAnswer = (convertedValue1 - convertedValue2).toString(final_base);
+                return value1.sub(value2);
             }
             else if (operation === '*') {
-                correctAnswer = (convertedValue1 * convertedValue2).toString(final_base);
+                return value1.mult(value2);
             }
             else if (operation === '/') {
-                correctAnswer = (convertedValue1 / convertedValue2).toString(final_base);
+                return value1.div(value2);
             }
-            console.log(correctAnswer);
+        }
+
+        function createTree() {
+            const tree = {
+                value: getRandomOperation(),
+                left: null,
+                right: null,
+            };
+            stack = [[tree, 1]];
+
+            while (stack.length > 0) {
+                const [node, depth] = stack.pop();
+
+                for (let dir of ['left', 'right']) {
+                    node[dir] = {
+                        value: null,
+                        left: null,
+                        right: null,
+                    };
+
+                    const type = choice(['operation', 'number']);
+                    if (type === 'operation' && depth <= MAX_DEPTH) {
+                        node[dir].value = getRandomOperation();
+                        stack.push([node[dir], depth + 1])
+                    } else {
+                        node[dir].value = getRandomNumber();
+                    }
+                }
+            }
+
+            return tree;
+        }
+
+
+        function getEquation(tree) {
+            if (['+', '-', '*', '/'].includes(tree.value))
+                return `(${getEquation(tree.left)} ${tree.value} ${getEquation(tree.right)})`
+            return tree.value
+        }
+
+        function computeTree(tree) {
+            if (['+', '-', '*', '/'].includes(tree.value)) {
+                return doMath(
+                    computeTree(tree.left),
+                    computeTree(tree.right),
+                    tree.value)
+            }
+            return tree.value
+        }
+
+        function answerEquals(expectedAnswer, userAnswer, eps=0.01) {
+            const actual = Number.parseFloat(expectedAnswer.value)
+            const userThing = Number.parseFloat(userAnswer)
+
+            const diff = Math.abs(actual - userThing)
+            return diff < eps;
         }
 
         function form2Handler(e) {
@@ -348,21 +485,11 @@
                 btnNext.style.display = 'block';
             }
             if (inputAnswer.value === correctAnswer) {
-                // let obj = {
-                //     date,
-                //     success
-                // }
-                // const data = JSON.stringify(obj);
                 const data = `Время: ${date}. Ответ: ${inputAnswer.value}. Верно`;
                 download(data, `${counter}ая попытка`, 'txt');
                 midResult.textContent = success;
                 counter++;
             } else {
-                // let obj = {
-                //     date,
-                //     wrong
-                // }
-                // const data = JSON.stringify(obj);
                 const data = `Время: ${date}. Ответ: ${inputAnswer.value}. Неверно`;
                 download(data, `${counter}ая попытка`, 'txt');
                 midResult.textContent = wrong;
@@ -370,44 +497,23 @@
             }
         }
 
+        function choice(choices) {
+            var index = Math.floor(Math.random() * choices.length);
+            return choices[index];
+        }
+
         function page2Handler() {
             page2.style.display = 'block';
 
-            const randBase1 = getRandomIntInclusive(2, 10);
-            const randBase2 = getRandomIntInclusive(2, 10);
-            const randBase3 = getRandomIntInclusive(2, 10);
+            const tree = createTree();
 
-            randValue1 = getRandomIntInclusive(-1000, 1000).toString(randBase1);
-            randValue2 = getRandomIntInclusive(-1000, 1000).toString(randBase2);
+            equationText.innerHTML = getEquation(tree).slice(1, -1);
+            const toBase = getRandomIntInclusive(2, 10)
+            subValue3.textContent = toBase;
 
-            const operationNumber = getRandomIntInclusive(1,4);
-            let operation = '+';
-
-            switch (operationNumber) {
-                case 1: 
-                    operation = '+';
-                    break;
-                case 2: 
-                    operation = '-';
-                    break;
-                case 3: 
-                    operation = '*';
-                    break;
-                case 4: 
-                    operation = '/';
-                    break;
-            }
-
-            sign.textContent = operation;
-
-            subValue1.textContent = randBase1;
-            subValue2.textContent = randBase2;
-            subValue3.textContent = randBase3;
-            
-            value1.textContent = randValue1;
-            value2.textContent = randValue2;
-
-            doMath(randValue1, randValue2, randBase1, randBase2, randBase3, operation);
+            const answer = computeTree(tree).value;
+            console.log(answer, fromDecimal(answer + '', toBase))
+            correctAnswer = fromDecimal(answer + '', toBase);
         }
 
         function formHandler(e) {
