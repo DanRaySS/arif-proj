@@ -21,7 +21,7 @@
         </div>
         <div id="page2" class="page2">
             <h2 class="h2">Задача</h2>
-            <p style="font-size: 18px; color: #666;">* — Округление до третьего знака после запятой</p>
+            <p class="dividingOnZero" style="font-size: 18px; color: #666;">Обнаружено деление на 0</p>
             <form class="form2" action="" method="get">
                 <span class="midResult"></span>
                 <p class="field">
@@ -168,6 +168,9 @@
     .success-after-save-comment {
         display: none;
     }
+    .dividingOnZero {
+        display: none;
+    }
 
    
 </style>
@@ -206,7 +209,8 @@
               mark = document.querySelector('.mark'),
               txtArea = document.querySelector('.txtArea'),
               successText = document.querySelector('.success-after-save-comment'),
-              equationText = document.querySelector('.equation');
+              equationText = document.querySelector('.equation'),
+              dividingOnZero = document.querySelector('.dividingOnZero');
 
         const MAX_DEPTH = 2;
 
@@ -227,7 +231,7 @@
 
 
         function getRandomOperation() {
-            const operation = choice(['+', '-', '*', '/', '+', '-', '*']);
+            const operation = choice(['+', '-', '*', '/']);
             return operation;
         }
 
@@ -375,7 +379,12 @@
 
             div(other) {
                 const [convertedValue1, convertedValue2] = this.convertValues(other);
-                return new BasedNumber(convertedValue1 / convertedValue2, 10);
+                if (convertedValue2 === 0) {
+                    dividingOnZero.style.display = 'block';
+                    btnTry1More.disabled = true;
+                    btnTry1More.style.background = '#646262';
+                }
+                return new BasedNumber(Math.round(convertedValue1 / convertedValue2), 10);
             }
 
             toDecimal() {
@@ -456,13 +465,13 @@
             return tree.value
         }
 
-        function answerEquals(expectedAnswer, userAnswer, eps=0.01) {
-            const actual = Number.parseFloat(expectedAnswer.value)
-            const userThing = Number.parseFloat(userAnswer)
+        // function answerEquals(expectedAnswer, userAnswer, eps=1) {
+        //     const actual = Number.parseFloat(expectedAnswer.value)
+        //     const userThing = Number.parseFloat(userAnswer)
 
-            const diff = Math.abs(actual - userThing)
-            return diff < eps;
-        }
+        //     const diff = Math.abs(actual - userThing)
+        //     return diff < eps;
+        // }
 
         function form2Handler(e) {
             e.preventDefault();
