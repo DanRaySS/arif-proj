@@ -1,1 +1,1 @@
-nativeJS
+Стек: nativeJS
